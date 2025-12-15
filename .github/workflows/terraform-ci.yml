@@ -5,9 +5,6 @@ on:
     branches: ["main"]
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
   terraform:
     name: "Terraform Plan & Apply"
@@ -27,8 +24,9 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: "us-east-2"
+          aws-region: "us-east-2" # Must match provider.tf region!
 
+      # 👇 REMOVED S3 backend reference - uses local state
       - name: Terraform Init
         run: terraform init
 
@@ -45,16 +43,13 @@ jobs:
         id: tf-outputs
         run: |
           echo "PUBLIC_IP=$(terraform output -raw instance_public_ip)" >> $GITHUB_OUTPUT
-          echo "PUBLIC_DNS=$(terraform output -raw instance_public_dns)" >> $GITHUB_OUTPUT
-          echo "URL=$(terraform output -raw application_url)" >> $GITHUB_OUTPUT
+          echo "URL=http://$(terraform output -raw instance_public_ip)" >> $GITHUB_OUTPUT
 
       - name: Display Instance Information
         run: |
-          echo "## 🚀 New EC2 Instance Deployed Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 New EC2 Instance Deployed!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Public IP:** ${{ steps.tf-outputs.outputs.PUBLIC_IP }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Public DNS:** ${{ steps.tf-outputs.outputs.PUBLIC_DNS }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**🌐 Access your application here:**" >> $GITHUB_STEP_SUMMARY
-          echo "[${{ steps.tf-outputs.outputs.URL }}](${{ steps.tf-outputs.outputs.URL }})" >> $GITHUB_STEP_SUMMARY
+          echo "**🌐 Access your website:**" >> $GITHUB_STEP_SUMMARY
+          echo "http://${{ steps.tf-outputs.outputs.PUBLIC_IP }}" >> $GITHUB_STEP_SUMMARY
