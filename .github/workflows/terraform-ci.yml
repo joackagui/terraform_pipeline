@@ -54,7 +54,6 @@ jobs:
           echo "**🌐 Access your website:**" >> $GITHUB_STEP_SUMMARY
           echo "http://${{ steps.tf-outputs.outputs.PUBLIC_IP }}" >> $GITHUB_STEP_SUMMARY
 
-
       - name: Test HTTP Connection
         run: |
           IP="${{ steps.tf-outputs.outputs.PUBLIC_IP }}"
@@ -78,4 +77,29 @@ jobs:
             --group-ids $SG_ID \
             --query "SecurityGroups[0].IpPermissions" \
             --output table
-
+      
+      - name: Debug Apache via SSH (Temporary)
+        if: always()  # Run even if previous steps fail
+        run: |
+          IP="${{ steps.tf-outputs.outputs.PUBLIC_IP }}"
+          echo "======================================"
+          echo "DEBUGGING INSTANCE: $IP"
+          echo "======================================"
+          
+          # Create a simple SSH key for debugging (or use your existing one)
+          echo "Creating temporary SSH key..."
+          ssh-keygen -t rsa -f /tmp/debug_key -N "" -q
+          
+          # Note: You'll need to configure SSH access properly
+          # For now, just show what commands to run manually:
+          echo ""
+          echo "MANUAL DEBUGGING COMMANDS:"
+          echo "1. Go to AWS Console → EC2 → Instances"
+          echo "2. Select your instance: apache-upb-2025"
+          echo "3. Click 'Connect' → 'EC2 Instance Connect'"
+          echo "4. Run these commands:"
+          echo "   sudo tail -100 /var/log/user-data-full.log"
+          echo "   sudo systemctl status httpd"
+          echo "   sudo journalctl -u httpd --no-pager | tail -50"
+          echo "   sudo ss -tlnp | grep :80"
+          echo "   curl http://localhost"
