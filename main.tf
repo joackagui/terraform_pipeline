@@ -1,6 +1,10 @@
 # main.tf
+resource "random_id" "sg_suffix" {
+  byte_length = 4
+}
+
 resource "aws_security_group" "web_sg" {
-  name        = "web-sg-1"
+  name        = "web-sg-${random_id.sg_suffix.hex}"  # 👈 Nombre único
   description = "Allow HTTP traffic"
 
   ingress {
@@ -20,9 +24,9 @@ resource "aws_security_group" "web_sg" {
 }
 
 resource "aws_instance" "apache_server" {
-  ami           = "ami-0e9a77f74db6ee25d"  
+  ami           = "ami-0b287e7832eb862f8"  # Amazon Linux 2
   instance_type = "t2.micro"
-  security_groups = [aws_security_group.web_sg.name]
+  vpc_security_group_ids = [aws_security_group.web_sg.id]
 
   user_data = <<-EOF
               #!/bin/bash
