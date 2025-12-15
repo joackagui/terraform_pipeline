@@ -1,0 +1,69 @@
+name: "Terraform CI/CD - Apply on Main"
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: "Terraform Plan & Apply"
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the repository code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Install Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.5"
+
+      # 3. Configure AWS credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: "us-east-2"
+
+      # 4. Initialize Terraform
+      - name: Terraform Init
+        run: terraform init
+
+      # 5. Validate the code
+      - name: Terraform Validate
+        run: terraform validate
+
+      # 6. Plan and show what will change
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+
+      # 7. Apply the plan automatically (only ONE apply step!)
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+
+      # 8. Capture Terraform outputs
+      - name: Terraform Outputs
+        id: tf-outputs
+        run: |
+          echo "PUBLIC_IP=$(terraform output -raw instance_public_ip)" >> $GITHUB_OUTPUT
+          echo "PUBLIC_DNS=$(terraform output -raw instance_public_dns)" >> $GITHUB_OUTPUT
+          echo "URL=$(terraform output -raw application_url)" >> $GITHUB_OUTPUT
+
+      # 9. Display the outputs in job summary
+      - name: Display Instance Information
+        run: |
+          echo "## 🚀 New EC2 Instance Deployed Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Public IP:** ${{ steps.tf-outputs.outputs.PUBLIC_IP }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Public DNS:** ${{ steps.tf-outputs.outputs.PUBLIC_DNS }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**🌐 Access your application here:**" >> $GITHUB_STEP_SUMMARY
+          echo "[${{ steps.tf-outputs.outputs.URL }}](${{ steps.tf-outputs.outputs.URL }})" >> $GITHUB_STEP_SUMMARY
