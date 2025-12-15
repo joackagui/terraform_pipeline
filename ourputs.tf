@@ -12,3 +12,8 @@ output "application_url" {
   description = "Full URL to access the Apache web server"
   value       = "http://${aws_instance.apache_server.public_dns}"
 }
+
+output "security_group_id" {
+  description = "ID of the created security group"
+  value       = aws_security_group.web_sg.id
+}
