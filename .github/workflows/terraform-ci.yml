@@ -53,3 +53,29 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**🌐 Access your website:**" >> $GITHUB_STEP_SUMMARY
           echo "http://${{ steps.tf-outputs.outputs.PUBLIC_IP }}" >> $GITHUB_STEP_SUMMARY
+
+
+      - name: Test HTTP Connection
+        run: |
+          IP="${{ steps.tf-outputs.outputs.PUBLIC_IP }}"
+          echo "Testing connection to $IP:80..."
+    
+          if nc -z -w 5 $IP 80; then
+            echo "✅ Port 80 is OPEN"
+          else
+            echo "❌ Port 80 is CLOSED or BLOCKED"
+          fi
+    
+          echo "Attempting to fetch webpage..."
+          curl -v --max-time 10 http://$IP || echo "CURL failed"
+
+      - name: Debug Security Group
+        run: |
+          SG_ID=$(terraform output -raw security_group_id 2>/dev/null || echo "unknown")
+    
+          echo "Current Security Group Rules:"
+          aws ec2 describe-security-groups \
+            --group-ids $SG_ID \
+            --query "SecurityGroups[0].IpPermissions" \
+            --output table
+
