@@ -20,7 +20,7 @@ resource "aws_security_group" "web_sg" {
 }
 
 resource "aws_instance" "apache_server" {
-  ami           = "ami-0c02fb55956c7d316"  
+  ami           = "ami-0cc87b5127a8e3bdb"  
   instance_type = "t2.micro"
   security_groups = [aws_security_group.web_sg.name]
 
