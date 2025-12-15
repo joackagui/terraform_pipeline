@@ -1,6 +1,6 @@
 # main.tf
 resource "aws_security_group" "web_sg" {
-  name        = "web-sg"
+  name        = "web-sg-1"
   description = "Allow HTTP traffic"
 
   ingress {
